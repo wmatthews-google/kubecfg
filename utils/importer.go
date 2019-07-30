@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -110,7 +112,7 @@ func (importer *universalImporter) Import(importedFrom, importedPath string) (js
 		}
 
 		tried = append(tried, foundAt)
-		importedData, err := importer.tryImport(foundAt)
+		importedData, err := importer.tryImport(dir, foundAt)
 		if err == nil {
 			importer.cache[foundAt] = importedData
 			return importedData, foundAt, nil
@@ -125,7 +127,17 @@ func (importer *universalImporter) Import(importedFrom, importedPath string) (js
 	)
 }
 
-func (importer *universalImporter) tryImport(url string) (jsonnet.Contents, error) {
+func (importer *universalImporter) tryImport(dir, url string) (jsonnet.Contents, error) {
+	if execCommand := strings.TrimPrefix(url, "exec:"); execCommand != url {
+		cmd := exec.Command("sh", "-c", execCommand)
+		cmd.Dir = filepath.Dir(strings.TrimPrefix(dir, "file://"))
+		res, err := cmd.Output()
+		if err != nil {
+			return jsonnet.Contents{}, err
+		}
+		return jsonnet.MakeContents(string(res)), nil
+	}
+
 	res, err := importer.HTTPClient.Get(url)
 	if err != nil {
 		return jsonnet.Contents{}, err
