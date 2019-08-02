@@ -141,4 +141,22 @@ func RegisterNativeFuncs(vm *jsonnet.VM, resolver Resolver) {
 			return r.ReplaceAllString(src, repl), nil
 		},
 	})
+
+	vm.NativeFunction(&jsonnet.NativeFunction{
+	  Name:   "exec",
+	  Params: []jsonnetAst.Identifier{"binary", "args"},
+	  Func: func(args []interface{}) (res interface{}, err error) {
+	    binary := args[0].(string)
+	    arg_interface_array := args[1].([]interface{})
+	    arg_array := make([]string, len(arg_interface_array))
+	    for i := range arg_array {
+	      arg_array[i] = arg_interface_array[i].(string)
+	    }
+      out, err := exec.Command(binary, arg_array...).Output()
+      if err == nil {
+        return string(out), nil
+      }
+      return nil, err
+	  },
+	})
 }
