@@ -112,7 +112,7 @@ func (importer *universalImporter) Import(importedFrom, importedPath string) (js
 		}
 
 		tried = append(tried, foundAt)
-		importedData, err := importer.tryImport(dir, foundAt)
+		importedData, err := importer.tryImport(importedFrom, foundAt)
 		if err == nil {
 			importer.cache[foundAt] = importedData
 			return importedData, foundAt, nil
